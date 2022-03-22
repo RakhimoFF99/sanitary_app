@@ -7,10 +7,24 @@ import 'package:sanitary_pets/src/screens/Desease/desease.page.dart';
 import 'package:sanitary_pets/src/screens/Food/food_page.dart';
 import 'package:sanitary_pets/src/screens/Login/login_page.dart';
 import 'package:sanitary_pets/src/screens/Medicine/Medicine.dart';
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   HomePage({Key? key}) : super(key: key);
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+  print('home');
+  }
   var auth = Get.find<Auth>();
-  var getAdress = Get.put(GetAdress());
+
+  var getAdress = Get.find<GetAdress>();
 
   @override
   Widget build(BuildContext context) {

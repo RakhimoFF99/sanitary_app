@@ -17,6 +17,7 @@ class Food extends StatefulWidget {
 class _FoodState extends State<Food> {
   var region;
   var district;
+  var qfi;
   var condition;
   var animal;
   List<String> animals = ["It", "Mushuk", "Ot"];
@@ -25,8 +26,9 @@ class _FoodState extends State<Food> {
   var files = [];
 
   @override
-  initState() {
+  initState () {
     super.initState();
+    getAdress.districts.value = [];
   }
 
   Widget buildGridView(file) {
@@ -270,13 +272,15 @@ class _FoodState extends State<Food> {
                                   FocusScope.of(context)
                                       .requestFocus(new FocusNode());
                                   setState(() {
+                                    getAdress.districts.value = [];
+                                    this.district = null;
                                     getAdress.getDistrict(value);
-                                    this.region = value;
+                                    this.region = value??['name_lot'];
                                   });
                                 },
                                 items: controller.region.map((value) {
                                   return DropdownMenuItem(
-                                    value: value['region_id'],
+                                    value: value,
                                     child: Text(value['name_lot']),
                                   );
                                 }).toList(),
@@ -314,12 +318,56 @@ class _FoodState extends State<Food> {
 
                                   ///It will clear all focus of the textfield
                                   setState(() {
-                                    this.district = value;
+                                    this.district = value??['name_lot'];
+                                    getAdress.getQfi(value??['district_id']);
+                                    this.qfi = null;
                                   });
                                 },
                                 items: controller.districts.map((value) {
                                   return DropdownMenuItem(
-                                    value: value['district_id'],
+                                    value: value,
+                                    child: Text(value['name_lot']),
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+
+                    SizedBox(height: 10,),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 15),
+                      child: GetX<GetAdress>(
+                        init: GetAdress(),
+                        builder: (controller) {
+                          return Container(
+                            decoration:
+                            BoxDecoration(border: Border.all(width: 0.3)),
+                            padding: EdgeInsets.symmetric(horizontal: 15),
+                            height: size.height / 13,
+                            width: double.infinity,
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton(
+                                isExpanded: true,
+                                value: this.qfi,
+                                borderRadius: BorderRadius.circular(10),
+                                style: TextStyle(
+                                    fontSize: 16, color: Colors.black),
+                                hint: Text("Qishloq".tr),
+                                onChanged: (value) {
+                                  FocusScope.of(context)
+                                      .requestFocus(new FocusNode());
+
+                                  ///It will clear all focus of the textfield
+                                  setState(() {
+                                    this.qfi = value;
+                                  });
+                                },
+                                items: controller.qfi.map((value) {
+                                  return DropdownMenuItem(
+                                    value: value,
                                     child: Text(value['name_lot']),
                                   );
                                 }).toList(),

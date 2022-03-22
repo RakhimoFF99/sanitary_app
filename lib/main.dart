@@ -5,6 +5,7 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
 import 'package:sanitary_pets/src/getx/LocaleString.dart';
 import 'package:sanitary_pets/src/getx/auth.dart';
+import 'package:sanitary_pets/src/getx/getAdress.dart';
 import 'package:sanitary_pets/src/getx/getLocale.dart';
 import 'package:sanitary_pets/src/screens/Home/home_page.dart';
 import 'package:sanitary_pets/src/screens/Login/login_page.dart';
@@ -16,6 +17,7 @@ import 'package:sanitary_pets/src/screens/Login/login_page.dart';
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
   await Get.put(GetLocale());
+  await Get.put(GetAdress());
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp, DeviceOrientation.portraitDown])
       .then((_) {
     runApp(

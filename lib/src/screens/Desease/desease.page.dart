@@ -1,10 +1,12 @@
 import 'dart:io';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:get/get_utils/src/extensions/internacionalization.dart';
 import 'package:sanitary_pets/src/getx/getAdress.dart';
+import 'package:sanitary_pets/src/service/api.dart';
 
 class Desease extends StatefulWidget {
   Desease();
@@ -17,16 +19,21 @@ class _DeseaseState extends State<Desease> {
   var district;
   var condition;
   var animal;
-  List<String> animals = ["It", "Mushuk", "Ot"];
-  List<String> conditions = ["Yaxshi", "Yomon", "Juda yomon", "O'lik", "Tirik"];
-
+  List animals = [];
+  List conditions = [];
   var files = [];
+  var qfi;
   var getAdress = Get.find<GetAdress>();
 
+  Dio dio = Dio();
+
+
   @override
-  void initState() {
+  initState () {
     super.initState();
     getAdress.districts.value = [];
+    getAnimalType();
+    getAnimalCondition();
   }
 
   Widget buildGridView(file) {
@@ -170,13 +177,13 @@ class _DeseaseState extends State<Desease> {
 
                               ///It will clear all focus of the textfield
                               setState(() {
-                                this.animal = value.toString();
+                                this.animal = value??['name_uz'];
                               });
                             },
-                            items: this.animals.map((String value) {
+                            items: this.animals.map(( value) {
                               return DropdownMenuItem(
                                 value: value,
-                                child: Text(value),
+                                child: Text(value['name_uz']),
                               );
                             }).toList(),
                           ),
@@ -207,13 +214,13 @@ class _DeseaseState extends State<Desease> {
 
                               ///It will clear all focus of the textfield
                               setState(() {
-                                this.condition = value.toString();
+                                this.condition = value;
                               });
                             },
-                            items: this.conditions.map((String value) {
+                            items: this.conditions.map(( value) {
                               return DropdownMenuItem(
                                 value: value,
-                                child: Text(value),
+                                child: Text(value['name_uz']),
                               );
                             }).toList(),
                           ),
@@ -253,8 +260,8 @@ class _DeseaseState extends State<Desease> {
                           return Container(
                             decoration: BoxDecoration(
                                 border: Border.all(
-                              width: 0.3,
-                            )),
+                                  width: 0.3,
+                                )),
                             padding: EdgeInsets.symmetric(horizontal: 15),
                             height: size.height / 13,
                             width: double.infinity,
@@ -270,13 +277,15 @@ class _DeseaseState extends State<Desease> {
                                   FocusScope.of(context)
                                       .requestFocus(new FocusNode());
                                   setState(() {
+                                    getAdress.districts.value = [];
+                                    this.district = null;
                                     getAdress.getDistrict(value);
-                                    this.region = value;
+                                    this.region = value??['name_lot'];
                                   });
                                 },
                                 items: controller.region.map((value) {
                                   return DropdownMenuItem(
-                                    value: value['region_id'],
+                                    value: value,
                                     child: Text(value['name_lot']),
                                   );
                                 }).toList(),
@@ -296,7 +305,7 @@ class _DeseaseState extends State<Desease> {
                         builder: (controller) {
                           return Container(
                             decoration:
-                                BoxDecoration(border: Border.all(width: 0.3)),
+                            BoxDecoration(border: Border.all(width: 0.3)),
                             padding: EdgeInsets.symmetric(horizontal: 15),
                             height: size.height / 13,
                             width: double.infinity,
@@ -314,12 +323,14 @@ class _DeseaseState extends State<Desease> {
 
                                   ///It will clear all focus of the textfield
                                   setState(() {
-                                    this.district = value;
+                                    this.district = value??['name_lot'];
+                                    getAdress.getQfi(value??['district_id']);
+                                    this.qfi = null;
                                   });
                                 },
                                 items: controller.districts.map((value) {
                                   return DropdownMenuItem(
-                                    value: value['district_id'],
+                                    value: value,
                                     child: Text(value['name_lot']),
                                   );
                                 }).toList(),
@@ -329,6 +340,7 @@ class _DeseaseState extends State<Desease> {
                         },
                       ),
                     ),
+
                     SizedBox(
                       height: 20,
                     ),
@@ -362,5 +374,36 @@ class _DeseaseState extends State<Desease> {
             ),
           ))),
     );
+  }
+
+
+  Future getAnimalType () async{
+      try {
+        var res = await dio.get("$baseUrl/reports/gettype");
+        if(res.statusCode == 200) {
+          setState(() {
+            animals = res.data;
+          });
+        }
+      }
+      catch(e) {
+        print(e);
+      }
+  }
+
+
+  Future getAnimalCondition () async{
+    try {
+      var res = await dio.get("$baseUrl/reports/getcategory");
+      print(res.data);
+      if(res.statusCode == 200) {
+        setState(() {
+          conditions = res.data;
+        });
+      }
+    }
+    catch(e) {
+      print(e);
+    }
   }
 }

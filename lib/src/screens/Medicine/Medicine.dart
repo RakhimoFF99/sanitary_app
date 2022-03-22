@@ -2,7 +2,9 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get_utils/src/extensions/internacionalization.dart';
+import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:sanitary_pets/src/getx/getAdress.dart';
 class Medicine extends StatefulWidget {
   Medicine({Key? key}) : super(key: key);
 
@@ -16,13 +18,20 @@ class _MedicineState extends State<Medicine> {
   var condition;
   var region;
   var district;
+  var qfi;
 
   List <String> medicines = ["dori","ovqat","suv"];
   List <String> conditions = ["Yaxshi","Yomon","Juda yomon"];
-  List <String> _regions = ["Toshkent","Samarqand","Xorazm","Navoiy","Buxoro"];
-  List <String> _districts = ["Xiva","Xonqa","Yangibozor","Navoiy","Buxoro"];
+
 
   var files = [];
+
+  var getAdress = Get.find<GetAdress>();
+  @override
+  initState () {
+    super.initState();
+    getAdress.districts.value = [];
+  }
 
   Widget buildGridView(file) {
     return  Padding(
@@ -248,78 +257,89 @@ class _MedicineState extends State<Medicine> {
                       SizedBox(height: 10,),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 15),
-                        child: Container(
-                          decoration: BoxDecoration(
-                              border: Border.all(width: 0.3,)
-                          ),
-                          padding: EdgeInsets.symmetric(horizontal: 15),
-                          height: size.height/13,
-                          width: double.infinity,
-                          child: DropdownButtonHideUnderline(
-                            child: DropdownButton(
-                              isExpanded: true,
-                              value: this.region,
-                              borderRadius: BorderRadius.circular(10),
-
-                              style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.black
+                        child: GetX<GetAdress>(
+                          init: GetAdress(),
+                          builder: (controller) {
+                            return Container(
+                              decoration: BoxDecoration(
+                                  border: Border.all(
+                                    width: 0.3,
+                                  )),
+                              padding: EdgeInsets.symmetric(horizontal: 15),
+                              height: size.height / 13,
+                              width: double.infinity,
+                              child: DropdownButtonHideUnderline(
+                                child: DropdownButton(
+                                  isExpanded: true,
+                                  value: this.region,
+                                  borderRadius: BorderRadius.circular(10),
+                                  style: TextStyle(
+                                      fontSize: 16, color: Colors.black),
+                                  hint: Text("Viloyat".tr),
+                                  onChanged: (value) {
+                                    FocusScope.of(context)
+                                        .requestFocus(new FocusNode());
+                                    setState(() {
+                                      getAdress.districts.value = [];
+                                      this.district = null;
+                                      getAdress.getDistrict(value);
+                                      this.region = value??['name_lot'];
+                                    });
+                                  },
+                                  items: controller.region.map((value) {
+                                    return DropdownMenuItem(
+                                      value: value,
+                                      child: Text(value['name_lot']),
+                                    );
+                                  }).toList(),
+                                ),
                               ),
-
-                              hint: Text("Viloyat".tr),
-                              onChanged: (value) {
-                                FocusScope.of(context).requestFocus(new FocusNode());///It will clear all focus of the textfield
-                                setState(() {
-                                  this.region = value.toString();
-                                });
-                              },
-                              items: this._regions.map((String value) {
-                                return DropdownMenuItem(
-                                  value: value,
-                                  child: Text(value),
-                                );
-                              }).toList(),
-                            ),
-                          ),
+                            );
+                          },
                         ),
                       ),
                       SizedBox(height: 20,),
 
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 15),
-                        child: Container(
-                          decoration: BoxDecoration(
-                              border: Border.all(width: 0.3)
-                          ),
-                          padding: EdgeInsets.symmetric(horizontal: 15),
-                          height: size.height/13,
-                          width: double.infinity,
-                          child: DropdownButtonHideUnderline(
-                            child: DropdownButton(
-                              isExpanded: true,
-                              value: this.district,
-                              borderRadius: BorderRadius.circular(10),
+                        child: GetX<GetAdress>(
+                          init: GetAdress(),
+                          builder: (controller) {
+                            return Container(
+                              decoration:
+                              BoxDecoration(border: Border.all(width: 0.3)),
+                              padding: EdgeInsets.symmetric(horizontal: 15),
+                              height: size.height / 13,
+                              width: double.infinity,
+                              child: DropdownButtonHideUnderline(
+                                child: DropdownButton(
+                                  isExpanded: true,
+                                  value: this.district,
+                                  borderRadius: BorderRadius.circular(10),
+                                  style: TextStyle(
+                                      fontSize: 16, color: Colors.black),
+                                  hint: Text("Tuman".tr),
+                                  onChanged: (value) {
+                                    FocusScope.of(context)
+                                        .requestFocus(new FocusNode());
 
-                              style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.black
+                                    ///It will clear all focus of the textfield
+                                    setState(() {
+                                      this.district = value??['name_lot'];
+                                      getAdress.getQfi(value??['district_id']);
+                                      this.qfi = null;
+                                    });
+                                  },
+                                  items: controller.districts.map((value) {
+                                    return DropdownMenuItem(
+                                      value: value,
+                                      child: Text(value['name_lot']),
+                                    );
+                                  }).toList(),
+                                ),
                               ),
-
-                              hint: Text("Tuman".tr),
-                              onChanged: (value) {
-                                FocusScope.of(context).requestFocus(new FocusNode());///It will clear all focus of the textfield
-                                setState(() {
-                                  this.district = value.toString();
-                                });
-                              },
-                              items: this._districts.map((String value) {
-                                return DropdownMenuItem(
-                                  value: value,
-                                  child: Text(value),
-                                );
-                              }).toList(),
-                            ),
-                          ),
+                            );
+                          },
                         ),
                       ),
                       SizedBox(height: 20,),
@@ -342,8 +362,6 @@ class _MedicineState extends State<Medicine> {
                           ),))),
 
                       SizedBox(height: 20,),
-
-
 
                     ]),
               ),
