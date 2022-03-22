@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_utils/src/extensions/internacionalization.dart';
 import 'package:sanitary_pets/src/getx/auth.dart';
+import 'package:sanitary_pets/src/getx/getAdress.dart';
 import 'package:sanitary_pets/src/screens/Desease/desease.page.dart';
 import 'package:sanitary_pets/src/screens/Food/food_page.dart';
 import 'package:sanitary_pets/src/screens/Login/login_page.dart';
@@ -9,6 +10,7 @@ import 'package:sanitary_pets/src/screens/Medicine/Medicine.dart';
 class HomePage extends StatelessWidget {
   HomePage({Key? key}) : super(key: key);
   var auth = Get.find<Auth>();
+  var getAdress = Get.put(GetAdress());
 
   @override
   Widget build(BuildContext context) {
