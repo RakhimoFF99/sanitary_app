@@ -26,9 +26,13 @@ class _FoodState extends State<Food> {
   var files = [];
 
   @override
-  initState () {
+  initState() {
     super.initState();
     getAdress.districts.value = [];
+    getAdress.districtId = null;
+    getAdress.regionId = null;
+    getAdress.qfyId = null;
+    getAdress.qfi.value = [];
   }
 
   Widget buildGridView(file) {
@@ -42,7 +46,9 @@ class _FoodState extends State<Food> {
         children: List.generate(file.length, (index) {
           if (file[index] is PickedFile) {
             print(file[index]);
-            return Image.file(File(file[index].path));
+            return Container(
+                margin: EdgeInsets.symmetric(vertical: 5),
+                child: Image.file(File(file[index].path)));
           }
           return Container();
         }),
@@ -55,8 +61,8 @@ class _FoodState extends State<Food> {
     try {
       resultList = await ImagePicker()
           .getMultiImage(imageQuality: 60, maxWidth: 800, maxHeight: 600);
-      if (resultList.length > 3) {
-        resultList.removeRange(3, resultList.length);
+      if (resultList.length > 6) {
+        resultList.removeRange(6, resultList.length);
       }
     } on Exception catch (e) {
       print(e.toString());
@@ -91,7 +97,7 @@ class _FoodState extends State<Food> {
                       height: 30,
                     ),
                     Text(
-                      "Kasallikni tegishli tashkilotga jo'natish uchun formani to'ldiring",
+                      "Ovqatni tegishli tashkilotga jo'natish uchun formani to'ldiring",
                       style:
                           TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
                       textAlign: TextAlign.center,
@@ -100,51 +106,7 @@ class _FoodState extends State<Food> {
                       height: 20,
                     ),
                     Text(
-                      "Xabar qiluvchi shaxs",
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-                    ),
-                    SizedBox(
-                      height: 10,
-                    ),
-                    Container(
-                      padding: EdgeInsets.symmetric(horizontal: 15),
-                      height: 50,
-                      child: TextField(
-                        keyboardType: TextInputType.text,
-                        decoration: InputDecoration(
-                            border: OutlineInputBorder(),
-                            errorBorder: OutlineInputBorder(
-                                borderSide:
-                                    BorderSide(color: Colors.red, width: 5)),
-                            labelText: "Ism".tr,
-                            prefixStyle: TextStyle(color: Colors.black),
-                            labelStyle: TextStyle(fontSize: 16)),
-                      ),
-                    ),
-                    SizedBox(
-                      height: 20,
-                    ),
-                    Container(
-                      padding: EdgeInsets.symmetric(horizontal: 15),
-                      height: 50,
-                      child: TextField(
-                        keyboardType: TextInputType.text,
-                        decoration: InputDecoration(
-                            border: OutlineInputBorder(),
-                            errorBorder: OutlineInputBorder(
-                                borderSide:
-                                    BorderSide(color: Colors.red, width: 5)),
-                            labelText: "Familiya".tr,
-                            prefixStyle: TextStyle(color: Colors.black),
-                            labelStyle: TextStyle(fontSize: 16)),
-                      ),
-                    ),
-                    SizedBox(
-                      height: 20,
-                    ),
-                    Text(
-                      "Xayvon",
+                      "Ovqat",
                       style:
                           TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                     ),
@@ -186,7 +148,7 @@ class _FoodState extends State<Food> {
                       ),
                     ),
                     SizedBox(
-                      height: 20,
+                      height: 10,
                     ),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 15),
@@ -223,7 +185,7 @@ class _FoodState extends State<Food> {
                       ),
                     ),
                     SizedBox(
-                      height: 15,
+                      height: 10,
                     ),
                     Container(
                       padding: EdgeInsets.symmetric(horizontal: 15),
@@ -237,7 +199,7 @@ class _FoodState extends State<Food> {
                       ),
                     ),
                     SizedBox(
-                      height: 15,
+                      height: 10,
                     ),
                     Text(
                       "Manzil",
@@ -275,7 +237,7 @@ class _FoodState extends State<Food> {
                                     getAdress.districts.value = [];
                                     this.district = null;
                                     getAdress.getDistrict(value);
-                                    this.region = value??['name_lot'];
+                                    this.region = value ?? ['name_lot'];
                                   });
                                 },
                                 items: controller.region.map((value) {
@@ -291,7 +253,7 @@ class _FoodState extends State<Food> {
                       ),
                     ),
                     SizedBox(
-                      height: 20,
+                      height: 10,
                     ),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 15),
@@ -318,8 +280,8 @@ class _FoodState extends State<Food> {
 
                                   ///It will clear all focus of the textfield
                                   setState(() {
-                                    this.district = value??['name_lot'];
-                                    getAdress.getQfi(value??['district_id']);
+                                    this.district = value ?? ['name_lot'];
+                                    getAdress.getQfi(value);
                                     this.qfi = null;
                                   });
                                 },
@@ -335,8 +297,9 @@ class _FoodState extends State<Food> {
                         },
                       ),
                     ),
-
-                    SizedBox(height: 10,),
+                    SizedBox(
+                      height: 10,
+                    ),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 15),
                       child: GetX<GetAdress>(
@@ -344,7 +307,7 @@ class _FoodState extends State<Food> {
                         builder: (controller) {
                           return Container(
                             decoration:
-                            BoxDecoration(border: Border.all(width: 0.3)),
+                                BoxDecoration(border: Border.all(width: 0.3)),
                             padding: EdgeInsets.symmetric(horizontal: 15),
                             height: size.height / 13,
                             width: double.infinity,
@@ -363,6 +326,7 @@ class _FoodState extends State<Food> {
                                   ///It will clear all focus of the textfield
                                   setState(() {
                                     this.qfi = value;
+                                    getAdress.setQfi(value);
                                   });
                                 },
                                 items: controller.qfi.map((value) {
@@ -378,17 +342,16 @@ class _FoodState extends State<Food> {
                       ),
                     ),
                     SizedBox(
-                      height: 20,
+                      height: 10,
                     ),
                     Text(
                       "Rasm",
                       style:
                           TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                     ),
-                    SizedBox(height: 15),
                     files.length > 0 ? buildGridView(files) : Container(),
                     SizedBox(
-                      height: 15,
+                      height: 10,
                     ),
                     Container(
                         padding: EdgeInsets.symmetric(horizontal: 15),

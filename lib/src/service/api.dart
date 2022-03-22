@@ -1,1 +1,1 @@
-const String baseUrl = "http://sayyor.vetgov.uz/api";
+const String baseUrl = "http://185.217.131.50/api";

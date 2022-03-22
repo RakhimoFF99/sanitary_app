@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:get/get_utils/src/extensions/internacionalization.dart';
@@ -27,11 +28,14 @@ class _DeseaseState extends State<Desease> {
 
   Dio dio = Dio();
 
-
   @override
-  initState () {
+  initState() {
     super.initState();
     getAdress.districts.value = [];
+    getAdress.districtId = null;
+    getAdress.regionId = null;
+    getAdress.qfyId = null;
+    getAdress.qfi.value = [];
     getAnimalType();
     getAnimalCondition();
   }
@@ -47,7 +51,9 @@ class _DeseaseState extends State<Desease> {
         children: List.generate(file.length, (index) {
           if (file[index] is PickedFile) {
             print(file[index]);
-            return Image.file(File(file[index].path));
+            return Container(
+                margin: EdgeInsets.symmetric(vertical: 5),
+                child: Image.file(File(file[index].path)));
           }
           return Container();
         }),
@@ -60,8 +66,8 @@ class _DeseaseState extends State<Desease> {
     try {
       resultList = await ImagePicker()
           .getMultiImage(imageQuality: 60, maxWidth: 800, maxHeight: 600);
-      if (resultList.length > 3) {
-        resultList.removeRange(3, resultList.length);
+      if (resultList.length > 6) {
+        resultList.removeRange(6, resultList.length);
       }
     } on Exception catch (e) {
       print(e.toString());
@@ -105,50 +111,6 @@ class _DeseaseState extends State<Desease> {
                       height: 20,
                     ),
                     Text(
-                      "Xabar qiluvchi shaxs",
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-                    ),
-                    SizedBox(
-                      height: 10,
-                    ),
-                    Container(
-                      padding: EdgeInsets.symmetric(horizontal: 15),
-                      height: 50,
-                      child: TextField(
-                        keyboardType: TextInputType.text,
-                        decoration: InputDecoration(
-                            border: OutlineInputBorder(),
-                            errorBorder: OutlineInputBorder(
-                                borderSide:
-                                    BorderSide(color: Colors.red, width: 5)),
-                            labelText: "Ism".tr,
-                            prefixStyle: TextStyle(color: Colors.black),
-                            labelStyle: TextStyle(fontSize: 16)),
-                      ),
-                    ),
-                    SizedBox(
-                      height: 20,
-                    ),
-                    Container(
-                      padding: EdgeInsets.symmetric(horizontal: 15),
-                      height: 50,
-                      child: TextField(
-                        keyboardType: TextInputType.text,
-                        decoration: InputDecoration(
-                            border: OutlineInputBorder(),
-                            errorBorder: OutlineInputBorder(
-                                borderSide:
-                                    BorderSide(color: Colors.red, width: 5)),
-                            labelText: "Familiya".tr,
-                            prefixStyle: TextStyle(color: Colors.black),
-                            labelStyle: TextStyle(fontSize: 16)),
-                      ),
-                    ),
-                    SizedBox(
-                      height: 20,
-                    ),
-                    Text(
                       "Xayvon",
                       style:
                           TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
@@ -177,10 +139,10 @@ class _DeseaseState extends State<Desease> {
 
                               ///It will clear all focus of the textfield
                               setState(() {
-                                this.animal = value??['name_uz'];
+                                this.animal = value ?? ['name_uz'];
                               });
                             },
-                            items: this.animals.map(( value) {
+                            items: this.animals.map((value) {
                               return DropdownMenuItem(
                                 value: value,
                                 child: Text(value['name_uz']),
@@ -191,7 +153,7 @@ class _DeseaseState extends State<Desease> {
                       ),
                     ),
                     SizedBox(
-                      height: 20,
+                      height: 10,
                     ),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 15),
@@ -217,7 +179,7 @@ class _DeseaseState extends State<Desease> {
                                 this.condition = value;
                               });
                             },
-                            items: this.conditions.map(( value) {
+                            items: this.conditions.map((value) {
                               return DropdownMenuItem(
                                 value: value,
                                 child: Text(value['name_uz']),
@@ -228,7 +190,7 @@ class _DeseaseState extends State<Desease> {
                       ),
                     ),
                     SizedBox(
-                      height: 15,
+                      height: 10,
                     ),
                     Container(
                       padding: EdgeInsets.symmetric(horizontal: 15),
@@ -242,7 +204,7 @@ class _DeseaseState extends State<Desease> {
                       ),
                     ),
                     SizedBox(
-                      height: 15,
+                      height: 10,
                     ),
                     Text(
                       "Manzil",
@@ -260,8 +222,8 @@ class _DeseaseState extends State<Desease> {
                           return Container(
                             decoration: BoxDecoration(
                                 border: Border.all(
-                                  width: 0.3,
-                                )),
+                              width: 0.3,
+                            )),
                             padding: EdgeInsets.symmetric(horizontal: 15),
                             height: size.height / 13,
                             width: double.infinity,
@@ -280,7 +242,7 @@ class _DeseaseState extends State<Desease> {
                                     getAdress.districts.value = [];
                                     this.district = null;
                                     getAdress.getDistrict(value);
-                                    this.region = value??['name_lot'];
+                                    this.region = value ?? ['name_lot'];
                                   });
                                 },
                                 items: controller.region.map((value) {
@@ -296,7 +258,7 @@ class _DeseaseState extends State<Desease> {
                       ),
                     ),
                     SizedBox(
-                      height: 20,
+                      height: 10,
                     ),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 15),
@@ -305,7 +267,7 @@ class _DeseaseState extends State<Desease> {
                         builder: (controller) {
                           return Container(
                             decoration:
-                            BoxDecoration(border: Border.all(width: 0.3)),
+                                BoxDecoration(border: Border.all(width: 0.3)),
                             padding: EdgeInsets.symmetric(horizontal: 15),
                             height: size.height / 13,
                             width: double.infinity,
@@ -323,8 +285,8 @@ class _DeseaseState extends State<Desease> {
 
                                   ///It will clear all focus of the textfield
                                   setState(() {
-                                    this.district = value??['name_lot'];
-                                    getAdress.getQfi(value??['district_id']);
+                                    this.district = value ?? ['name_lot'];
+                                    getAdress.getQfi(value ?? ['district_id']);
                                     this.qfi = null;
                                   });
                                 },
@@ -340,19 +302,61 @@ class _DeseaseState extends State<Desease> {
                         },
                       ),
                     ),
-
                     SizedBox(
-                      height: 20,
+                      height: 10,
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 15),
+                      child: GetX<GetAdress>(
+                        init: GetAdress(),
+                        builder: (controller) {
+                          return Container(
+                            decoration:
+                                BoxDecoration(border: Border.all(width: 0.3)),
+                            padding: EdgeInsets.symmetric(horizontal: 15),
+                            height: size.height / 13,
+                            width: double.infinity,
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton(
+                                isExpanded: true,
+                                value: this.qfi,
+                                borderRadius: BorderRadius.circular(10),
+                                style: TextStyle(
+                                    fontSize: 16, color: Colors.black),
+                                hint: Text("Qishloq".tr),
+                                onChanged: (value) {
+                                  FocusScope.of(context)
+                                      .requestFocus(new FocusNode());
+
+                                  ///It will clear all focus of the textfield
+                                  setState(() {
+                                    this.qfi = value;
+                                    getAdress.setQfi(value);
+                                  });
+                                },
+                                items: controller.qfi.map((value) {
+                                  return DropdownMenuItem(
+                                    value: value,
+                                    child: Text(value['name_lot']),
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    SizedBox(
+                      height: 10,
                     ),
                     Text(
                       "Rasm",
                       style:
                           TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                     ),
-                    SizedBox(height: 15),
                     files.length > 0 ? buildGridView(files) : Container(),
                     SizedBox(
-                      height: 15,
+                      height: 10,
                     ),
                     Container(
                         padding: EdgeInsets.symmetric(horizontal: 15),
@@ -376,33 +380,32 @@ class _DeseaseState extends State<Desease> {
     );
   }
 
-
-  Future getAnimalType () async{
-      try {
-        var res = await dio.get("$baseUrl/reports/gettype");
-        if(res.statusCode == 200) {
-          setState(() {
-            animals = res.data;
-          });
-        }
+  Future getAnimalType() async {
+    EasyLoading.show();
+    try {
+      var res = await dio.get("$baseUrl/reports/gettype");
+      if (res.statusCode == 200) {
+        setState(() {
+          animals = res.data;
+        });
       }
-      catch(e) {
-        print(e);
-      }
+    } catch (e) {
+      EasyLoading.dismiss();
+      print(e);
+    }
   }
 
-
-  Future getAnimalCondition () async{
+  Future getAnimalCondition() async {
     try {
       var res = await dio.get("$baseUrl/reports/getcategory");
-      print(res.data);
-      if(res.statusCode == 200) {
+      EasyLoading.dismiss();
+      if (res.statusCode == 200) {
         setState(() {
           conditions = res.data;
         });
       }
-    }
-    catch(e) {
+    } catch (e) {
+      EasyLoading.dismiss();
       print(e);
     }
   }
