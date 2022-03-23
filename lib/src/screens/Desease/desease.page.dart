@@ -1,12 +1,19 @@
+
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:dio/dio.dart';
+import 'package:dio/src/multipart_file.dart' as Multipart;
+import 'package:dio/src/form_data.dart' as FormData;
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
+import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:get/get_utils/src/extensions/internacionalization.dart';
+import 'package:sanitary_pets/src/getx/auth.dart';
 import 'package:sanitary_pets/src/getx/getAdress.dart';
+import 'package:sanitary_pets/src/getx/getLocale.dart';
 import 'package:sanitary_pets/src/service/api.dart';
 
 class Desease extends StatefulWidget {
@@ -25,12 +32,20 @@ class _DeseaseState extends State<Desease> {
   var files = [];
   var qfi;
   var getAdress = Get.find<GetAdress>();
+  var animalId;
+  var animalCondition;
+  var position;
 
   Dio dio = Dio();
+
+  TextEditingController _detail = TextEditingController();
+  var auth = Get.find<Auth>();
+  var locale = Get.find<GetLocale>();
 
   @override
   initState() {
     super.initState();
+    _determinePosition();
     getAdress.districts.value = [];
     getAdress.districtId = null;
     getAdress.regionId = null;
@@ -72,7 +87,6 @@ class _DeseaseState extends State<Desease> {
     } on Exception catch (e) {
       print(e.toString());
     }
-    print(resultList);
     setState(() {
       files = resultList;
     });
@@ -140,6 +154,8 @@ class _DeseaseState extends State<Desease> {
                               ///It will clear all focus of the textfield
                               setState(() {
                                 this.animal = value ?? ['name_uz'];
+                                setAnimalId(value);
+                                print(value);
                               });
                             },
                             items: this.animals.map((value) {
@@ -177,6 +193,7 @@ class _DeseaseState extends State<Desease> {
                               ///It will clear all focus of the textfield
                               setState(() {
                                 this.condition = value;
+                                setAnimalCondition(value);
                               });
                             },
                             items: this.conditions.map((value) {
@@ -195,6 +212,7 @@ class _DeseaseState extends State<Desease> {
                     Container(
                       padding: EdgeInsets.symmetric(horizontal: 15),
                       child: TextField(
+                        controller: _detail,
                         decoration: InputDecoration(
                             contentPadding: EdgeInsets.symmetric(
                                 vertical: 18, horizontal: 10),
@@ -288,6 +306,7 @@ class _DeseaseState extends State<Desease> {
                                     this.district = value ?? ['name_lot'];
                                     getAdress.getQfi(value ?? ['district_id']);
                                     this.qfi = null;
+
                                   });
                                 },
                                 items: controller.districts.map((value) {
@@ -371,6 +390,20 @@ class _DeseaseState extends State<Desease> {
                               style: TextStyle(
                                   fontSize: 16, fontWeight: FontWeight.w700),
                             ))),
+                    SizedBox(height: 10,),
+                    Container(
+                        padding: EdgeInsets.symmetric(horizontal: 15),
+                        width: double.infinity,
+                        height: 45,
+                        child: ElevatedButton(
+                            onPressed: () {
+                             sendImage();
+                            },
+                            child: Text(
+                              "Malumotlarni yuborish",
+                              style: TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.w700),
+                            ))),
                     SizedBox(
                       height: 20,
                     ),
@@ -378,6 +411,19 @@ class _DeseaseState extends State<Desease> {
             ),
           ))),
     );
+  }
+
+  setAnimalId (value) {
+    setState(() {
+      this.animalId = value['id'];
+
+    });
+  }
+  setAnimalCondition (value) {
+    setState(() {
+      this.animalCondition = value['id'];
+
+    });
   }
 
   Future getAnimalType() async {
@@ -408,5 +454,97 @@ class _DeseaseState extends State<Desease> {
       EasyLoading.dismiss();
       print(e);
     }
+  }
+
+  Future sendImage() async {
+    EasyLoading.show();
+    var images = [];
+
+    for (var i = 0; i < files.length; i++) {
+      var multipartFile = await Multipart.MultipartFile.fromFile(
+          files[i].path,
+          contentType: MediaType("image", "jpg"));
+      images.add(multipartFile);
+    }
+
+    var formData = FormData.FormData.fromMap({
+      "image[]":images
+    });
+    try {
+        var response = await dio.post("$baseUrl/reports/setimage",data: formData);
+
+        print(response.data);
+        if(response.statusCode == 200) {
+          sendAllData(response.data);
+        }
+    }
+    catch(e) {
+      EasyLoading.dismiss();
+      print(e);
+    }
+  }
+
+  Future<Position> _determinePosition() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+
+      return Future.error('Location services are disabled.');
+    }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+
+        return Future.error('Location permissions are denied');
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+
+      return Future.error(
+          'Location permissions are permanently denied, we cannot request permissions.');
+    }
+    var location =    await Geolocator.getCurrentPosition();
+        position = location;
+return location;
+
+  }
+
+ Future sendAllData (image) async{
+    var phone = auth.phone.split('');
+      for(var i = 0; i<phone.length; i++) {
+        if(phone[i] == " "||phone[i] == "-") {
+            phone.removeAt(i);
+        }
+      }
+
+    Map data  = {
+      "type_id":animalId,
+      "cat_id":animalCondition,
+      "detail":_detail.text,
+      "lat":position.latitude,
+      "long":position.longitude,
+      "phone":"998" + phone.join(),
+      "lang":locale.locale.toString(),
+      "soato_id":getAdress.qfyId,
+      "image":image
+
+    } ;
+    print(data);
+
+    try {
+        var response = await dio.post("$baseUrl/reports/create",data: data);
+        if(response.statusCode == 200) {
+          EasyLoading.showSuccess('Malumotlar yuklandi');
+          Navigator.pop(context);
+        }
+      }
+      catch(e) {
+        EasyLoading.dismiss();
+      }
   }
 }

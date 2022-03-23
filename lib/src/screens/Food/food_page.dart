@@ -1,11 +1,18 @@
 import 'dart:io';
-
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:dio/src/multipart_file.dart' as Multipart;
+import 'package:dio/src/form_data.dart' as FormData;
+import 'package:http_parser/http_parser.dart';
+import 'package:sanitary_pets/src/getx/auth.dart';
 import 'package:sanitary_pets/src/getx/getAdress.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:get/get_utils/src/extensions/internacionalization.dart';
+import 'package:sanitary_pets/src/getx/getLocale.dart';
+import 'package:sanitary_pets/src/service/api.dart';
 
 class Food extends StatefulWidget {
   const Food({Key? key}) : super(key: key);
@@ -19,11 +26,21 @@ class _FoodState extends State<Food> {
   var district;
   var qfi;
   var condition;
-  var animal;
-  List<String> animals = ["It", "Mushuk", "Ot"];
-  List<String> conditions = ["Yaxshi", "Yomon", "Juda yomon", "O'lik", "Tirik"];
+  var food;
+
+  var conditions = [];
   var getAdress = Get.find<GetAdress>();
   var files = [];
+
+  Dio dio = Dio();
+  var position;
+
+  var auth = Get.find<Auth>();
+  var locale = Get.find<GetLocale>();
+
+  TextEditingController _detail = TextEditingController();
+
+
 
   @override
   initState() {
@@ -33,6 +50,10 @@ class _FoodState extends State<Food> {
     getAdress.regionId = null;
     getAdress.qfyId = null;
     getAdress.qfi.value = [];
+    getAdress.foodById.value = [];
+    getAdress.values.value = [];
+    getFoodCondition();
+    _determinePosition();
   }
 
   Widget buildGridView(file) {
@@ -115,41 +136,105 @@ class _FoodState extends State<Food> {
                     ),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 15),
-                      child: Container(
-                        decoration:
-                            BoxDecoration(border: Border.all(width: 0.3)),
-                        padding: EdgeInsets.symmetric(horizontal: 10),
-                        height: size.height / 13,
-                        width: double.infinity,
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton(
-                            isExpanded: true,
-                            value: this.animal,
-                            borderRadius: BorderRadius.circular(10),
-                            style: TextStyle(fontSize: 16, color: Colors.black),
-                            hint: Text("Xayvonni turi".tr),
-                            onChanged: (value) {
-                              FocusScope.of(context)
-                                  .requestFocus(new FocusNode());
+                      child: GetX<GetAdress>(
+                        init: GetAdress(),
+                        builder: (controller) {
+                          return Container(
+                            decoration:
+                                BoxDecoration(border: Border.all(width: 0.3)),
+                            padding: EdgeInsets.symmetric(horizontal: 10),
+                            height: size.height / 13,
+                            width: double.infinity,
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton(
+                                isExpanded: true,
+                                value: this.food,
+                                borderRadius: BorderRadius.circular(10),
+                                style: TextStyle(
+                                    fontSize: 16, color: Colors.black),
+                                hint: Text("Xayvonni turi".tr),
+                                onChanged: (value) {
+                                  FocusScope.of(context)
+                                      .requestFocus(new FocusNode());
 
-                              ///It will clear all focus of the textfield
-                              setState(() {
-                                this.animal = value.toString();
-                              });
-                            },
-                            items: this.animals.map((String value) {
-                              return DropdownMenuItem(
-                                value: value,
-                                child: Text(value),
-                              );
-                            }).toList(),
-                          ),
-                        ),
+                                  ///It will clear all focus of the textfield
+                                  setState(() {
+                                    getAdress.foodById.value = [];
+                                    getAdress.values.value = [];
+                                    this.food = value;
+
+                                    getAdress.getFoodById(value);
+                                  });
+                                },
+                                items: controller.food.map((value) {
+                                  return DropdownMenuItem(
+                                    value: value,
+                                    child: Text(value['name']),
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+                          );
+                        },
                       ),
                     ),
-                    SizedBox(
-                      height: 10,
+                    GetX<GetAdress>(
+                      init: GetAdress(),
+                      builder: (controller) {
+                        return Column(children: [
+
+                          Container(
+                            padding: EdgeInsets.symmetric(horizontal: 15,),
+
+                            child: ListView.builder(
+                                shrinkWrap: true,
+                                itemCount: controller.foodById.length,
+                                itemBuilder: (context, index) {
+                                  return Container(
+                                      decoration: BoxDecoration(
+                                          border: Border.all(width: 0.3)),
+                                      padding:
+                                          EdgeInsets.symmetric(horizontal: 10),
+                                      margin: EdgeInsets.symmetric(vertical: 10),
+                                      height: size.height / 13,
+                                      width: double.infinity,
+                                      child: DropdownButtonHideUnderline(
+                                        child: DropdownButton(
+                                            isExpanded: true,
+                                            value: controller.values[index],
+                                            borderRadius:
+                                                BorderRadius.circular(10),
+                                            style: TextStyle(
+                                                fontSize: 16,
+                                                color: Colors.black),
+                                            hint: Text("Ovqat turi"),
+                                            onChanged: (value) {
+                                              FocusScope.of(context)
+                                                  .requestFocus(
+                                                      new FocusNode());
+
+                                              ///It will clear all focus of the textfield
+                                              setState(() {
+                                                getAdress.clearChild(index);
+                                                controller.values[index] = value;
+                                                getAdress.getFoodById(value);
+                                              });
+                                            },
+                                            items: controller.foodById[index]
+                                                .map((value) {
+                                              return DropdownMenuItem(
+                                                value: value,
+                                                child: Text(value['name']),
+                                              );
+                                            }).toList()),
+                                      ));
+                                }),
+                          ),
+
+                        ]);
+                      },
                     ),
+
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 15),
                       child: Container(
@@ -171,13 +256,14 @@ class _FoodState extends State<Food> {
 
                               ///It will clear all focus of the textfield
                               setState(() {
-                                this.condition = value.toString();
+                                this.condition = value;
+                                selectedCat(value);
                               });
                             },
-                            items: this.conditions.map((String value) {
+                            items: this.conditions.map(( value) {
                               return DropdownMenuItem(
                                 value: value,
-                                child: Text(value),
+                                child: Text(value['name_uz']),
                               );
                             }).toList(),
                           ),
@@ -366,6 +452,21 @@ class _FoodState extends State<Food> {
                               style: TextStyle(
                                   fontSize: 16, fontWeight: FontWeight.w700),
                             ))),
+
+                    SizedBox(height: 10,),
+                    Container(
+                        padding: EdgeInsets.symmetric(horizontal: 15),
+                        width: double.infinity,
+                        height: 45,
+                        child: ElevatedButton(
+                            onPressed: () {
+                              sendImage();
+                            },
+                            child: Text(
+                              "Malumotlarni yuklash",
+                              style: TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.w700),
+                            ))),
                     SizedBox(
                       height: 20,
                     ),
@@ -374,4 +475,120 @@ class _FoodState extends State<Food> {
           ))),
     );
   }
+
+
+  Future sendImage() async {
+    EasyLoading.show();
+    var images = [];
+    for (var i = 0; i < files.length; i++) {
+      var multipartFile = await Multipart.MultipartFile.fromFile(
+          files[i].path,
+          contentType: MediaType("image", "jpg"));
+      images.add(multipartFile);
+    }
+
+    var formData = FormData.FormData.fromMap({
+      "image[]":images
+    });
+    try {
+      var response = await dio.post("$baseUrl/reports/setimage",data: formData);
+      if(response.statusCode == 200) {
+        sendAllData(response.data);
+      }
+    }
+    catch(e) {
+      print(e);
+      EasyLoading.dismiss();
+    }
+  }
+
+
+    selectedCat (value) {
+      setState(() {
+        condition = value;
+      });
+    }
+  Future<Position> _determinePosition() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+
+      return Future.error('Location services are disabled.');
+    }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+
+        return Future.error('Location permissions are denied');
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+
+      return Future.error(
+          'Location permissions are permanently denied, we cannot request permissions.');
+    }
+    var location =    await Geolocator.getCurrentPosition();
+    position = location;
+    return location;
+
+  }
+
+
+  Future getFoodCondition() async {
+    try {
+      var res = await dio.get("$baseUrl/reports/getfoodcategory");
+      EasyLoading.dismiss();
+      print(res.data);
+      if (res.statusCode == 200) {
+        setState(() {
+          conditions = res.data;
+        });
+      }
+    } catch (e) {
+      print(e);
+      EasyLoading.dismiss();
+    }
+  }
+
+  Future sendAllData (image) async{
+    var phone = auth.phone.split('');
+    for(var i = 0; i<phone.length; i++) {
+      if(phone[i] == " "||phone[i] == "-") {
+        phone.removeAt(i);
+      }
+    }
+
+    Map data  = {
+      "type_id":getAdress.foodId,
+      "cat_id":condition,
+      "detail":_detail.text,
+      "lat":position.latitude,
+      "long":position.longitude,
+      "phone":"998" + phone.join(),
+      "lang":locale.locale.toString(),
+      "soato_id":getAdress.qfyId,
+      "image":image
+
+    } ;
+    print(data);
+
+    try {
+      var response = await dio.post("$baseUrl/reports/createfood",data: data);
+      if(response.statusCode == 200) {
+        EasyLoading.showSuccess('Malumotlar yuklandi');
+        Navigator.pop(context);
+      }
+    }
+    catch(e) {
+      EasyLoading.dismiss();
+    }
+  }
+
+
+
 }
