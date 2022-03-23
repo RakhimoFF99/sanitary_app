@@ -68,7 +68,7 @@ class _MedicineState extends State<Medicine> {
         crossAxisSpacing: 7,
         children: List.generate(file.length, (index) {
           if (file[index] is PickedFile) {
-            print(file[index]);
+
             return Container(
                 margin: EdgeInsets.symmetric(vertical: 5),
                 child: Image.file(File(file[index].path)));
@@ -90,7 +90,7 @@ class _MedicineState extends State<Medicine> {
     } on Exception catch (e) {
       print(e.toString());
     }
-    print(resultList);
+
     setState(() {
       files = resultList;
     });
@@ -377,9 +377,24 @@ class _MedicineState extends State<Medicine> {
                       width: double.infinity,
                       height: 45,
                       child: ElevatedButton(
-                          onPressed: () {
-                            sendImage();
-                          },
+                          onPressed: () async{
+                            if(medicineTypeId == null && medicineConditionId == null) {
+                              EasyLoading.showError("Dori turi va xolatini to'ldiring");
+
+                            }
+                          else  if(getAdress.qfyId == null) {
+                              EasyLoading.showError("Manzilni to'liq to'ldiring to'ldiring");
+
+                            }
+                           else if(files.length == 0) {
+                              EasyLoading.showError("Rasm yuklang !");
+
+                            }
+                           else {
+                              await _determinePosition();
+                              position == null ? EasyLoading.showError("Joylashuvni olishga ruxsat bering"):sendImage();
+                            }
+                            },
                           child: Text(
                             "Malumotlarni yuborish",
                             style: TextStyle(
@@ -460,7 +475,7 @@ class _MedicineState extends State<Medicine> {
     }
     catch(e) {
       print(e);
-      EasyLoading.dismiss();
+      EasyLoading.showError("Xatolik yuz berdi");
     }
   }
 
@@ -519,12 +534,12 @@ class _MedicineState extends State<Medicine> {
     try {
       var response = await dio.post("$baseUrl/reports/createdrug",data: data);
       if(response.statusCode == 200) {
-        EasyLoading.showSuccess('Malumotlar yuklandi');
+        EasyLoading.showSuccess("Xabaringiz qabul qilindi tez orada ko'rib chiqiladi natija sms xabar qilinadi");
         Navigator.pop(context);
       }
     }
     catch(e) {
-      EasyLoading.dismiss();
+      EasyLoading.showError("Xatolik yuz berdi");
     }
   }
 

@@ -65,7 +65,7 @@ class _DeseaseState extends State<Desease> {
         crossAxisSpacing: 7,
         children: List.generate(file.length, (index) {
           if (file[index] is PickedFile) {
-            print(file[index]);
+
             return Container(
                 margin: EdgeInsets.symmetric(vertical: 5),
                 child: Image.file(File(file[index].path)));
@@ -155,7 +155,7 @@ class _DeseaseState extends State<Desease> {
                               setState(() {
                                 this.animal = value ?? ['name_uz'];
                                 setAnimalId(value);
-                                print(value);
+
                               });
                             },
                             items: this.animals.map((value) {
@@ -396,8 +396,23 @@ class _DeseaseState extends State<Desease> {
                         width: double.infinity,
                         height: 45,
                         child: ElevatedButton(
-                            onPressed: () {
-                             sendImage();
+                            onPressed: () async{
+                              if(animalId == null && animalCondition == null) {
+                                EasyLoading.showError("Kasallik turi va xolatini to'ldiring");
+
+                              }
+                             else  if(getAdress.qfyId == null) {
+                                EasyLoading.showError("Manzilni to'liq to'ldiring to'ldiring");
+
+                              }
+                             else  if(files.length == 0) {
+                                EasyLoading.showError("Rasm yuklang !");
+
+                              }
+                           else {
+                                await _determinePosition();
+                                position == null ? EasyLoading.showError("Joylashuvni olishga ruxsat bering"):sendImage();
+                              }
                             },
                             child: Text(
                               "Malumotlarni yuborish",
@@ -473,13 +488,12 @@ class _DeseaseState extends State<Desease> {
     try {
         var response = await dio.post("$baseUrl/reports/setimage",data: formData);
 
-        print(response.data);
         if(response.statusCode == 200) {
           sendAllData(response.data);
         }
     }
     catch(e) {
-      EasyLoading.dismiss();
+      EasyLoading.showError("Xatolik yuz berdi");
       print(e);
     }
   }
@@ -534,17 +548,17 @@ return location;
       "image":image
 
     } ;
-    print(data);
+
 
     try {
         var response = await dio.post("$baseUrl/reports/create",data: data);
         if(response.statusCode == 200) {
-          EasyLoading.showSuccess('Malumotlar yuklandi');
+          EasyLoading.showSuccess("Xabaringiz qabul qilindi tez orada ko'rib chiqiladi natija sms xabar qilinadi");
           Navigator.pop(context);
         }
       }
       catch(e) {
-        EasyLoading.dismiss();
+        EasyLoading.showError("Xatolik yuz berdi");
       }
   }
 }

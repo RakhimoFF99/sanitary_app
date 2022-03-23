@@ -104,6 +104,7 @@ class GetAdress extends GetxController {
 
     try {
       var res = await dio.get("$baseUrl/reports/getqfi?id=$id&regid=$regionId");
+
       EasyLoading.dismiss();
       this.qfi.value = res.data;
     } catch (e) {

@@ -26,6 +26,7 @@ class _FoodState extends State<Food> {
   var district;
   var qfi;
   var condition;
+  var conditionId;
   var food;
 
   var conditions = [];
@@ -66,7 +67,7 @@ class _FoodState extends State<Food> {
         crossAxisSpacing: 7,
         children: List.generate(file.length, (index) {
           if (file[index] is PickedFile) {
-            print(file[index]);
+
             return Container(
                 margin: EdgeInsets.symmetric(vertical: 5),
                 child: Image.file(File(file[index].path)));
@@ -86,9 +87,9 @@ class _FoodState extends State<Food> {
         resultList.removeRange(6, resultList.length);
       }
     } on Exception catch (e) {
-      print(e.toString());
+
     }
-    print(resultList);
+
     setState(() {
       files = resultList;
     });
@@ -152,7 +153,7 @@ class _FoodState extends State<Food> {
                                 borderRadius: BorderRadius.circular(10),
                                 style: TextStyle(
                                     fontSize: 16, color: Colors.black),
-                                hint: Text("Xayvonni turi".tr),
+                                hint: Text("Ovqat turi".tr),
                                 onChanged: (value) {
                                   FocusScope.of(context)
                                       .requestFocus(new FocusNode());
@@ -249,7 +250,7 @@ class _FoodState extends State<Food> {
                             value: this.condition,
                             borderRadius: BorderRadius.circular(10),
                             style: TextStyle(fontSize: 16, color: Colors.black),
-                            hint: Text("Xayvonni xolati".tr),
+                            hint: Text("Ovqat xolati".tr),
                             onChanged: (value) {
                               FocusScope.of(context)
                                   .requestFocus(new FocusNode());
@@ -459,8 +460,24 @@ class _FoodState extends State<Food> {
                         width: double.infinity,
                         height: 45,
                         child: ElevatedButton(
-                            onPressed: () {
-                              sendImage();
+                            onPressed: () async{
+                             if(conditionId == null && getAdress.foodId == null) {
+                               EasyLoading.showError("Ovqat turi va xolatini to'ldiring");
+                          ;
+                             }
+                            else if(getAdress.qfyId == null) {
+                               EasyLoading.showError("Manzilni to'liq to'ldiring to'ldiring");
+
+                             }
+                            else if(files.length == 0) {
+                               EasyLoading.showError("Rasm yuklang !");
+
+                             }
+                            else {
+                               await _determinePosition();
+                               position == null ? EasyLoading.showError("Joylashuvni olishga ruxsat bering"):sendImage();
+                             }
+
                             },
                             child: Text(
                               "Malumotlarni yuklash",
@@ -478,6 +495,7 @@ class _FoodState extends State<Food> {
 
 
   Future sendImage() async {
+
     EasyLoading.show();
     var images = [];
     for (var i = 0; i < files.length; i++) {
@@ -493,19 +511,20 @@ class _FoodState extends State<Food> {
     try {
       var response = await dio.post("$baseUrl/reports/setimage",data: formData);
       if(response.statusCode == 200) {
+        print(response.data);
         sendAllData(response.data);
       }
     }
     catch(e) {
-      print(e);
-      EasyLoading.dismiss();
+
+      EasyLoading.showError("Xatolik yuz berdi");
     }
   }
 
 
     selectedCat (value) {
       setState(() {
-        condition = value;
+        conditionId = value['id'];
       });
     }
   Future<Position> _determinePosition() async {
@@ -514,7 +533,6 @@ class _FoodState extends State<Food> {
 
     serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-
       return Future.error('Location services are disabled.');
     }
 
@@ -543,7 +561,7 @@ class _FoodState extends State<Food> {
     try {
       var res = await dio.get("$baseUrl/reports/getfoodcategory");
       EasyLoading.dismiss();
-      print(res.data);
+
       if (res.statusCode == 200) {
         setState(() {
           conditions = res.data;
@@ -565,7 +583,7 @@ class _FoodState extends State<Food> {
 
     Map data  = {
       "type_id":getAdress.foodId,
-      "cat_id":condition,
+      "cat_id":conditionId,
       "detail":_detail.text,
       "lat":position.latitude,
       "long":position.longitude,
@@ -575,17 +593,17 @@ class _FoodState extends State<Food> {
       "image":image
 
     } ;
-    print(data);
+  print(data);
 
     try {
       var response = await dio.post("$baseUrl/reports/createfood",data: data);
       if(response.statusCode == 200) {
-        EasyLoading.showSuccess('Malumotlar yuklandi');
+        EasyLoading.showSuccess("Xabaringiz qabul qilindi tez orada ko'rib chiqiladi natija sms xabar qilinadi");
         Navigator.pop(context);
       }
     }
     catch(e) {
-      EasyLoading.dismiss();
+      EasyLoading.showError("Xatolik yuz berdi");
     }
   }
 
